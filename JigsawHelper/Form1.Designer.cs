@@ -32,6 +32,10 @@
             this.OriginalImageGroupBox = new System.Windows.Forms.GroupBox();
             this.TestImageGroupBox = new System.Windows.Forms.GroupBox();
             this.TestImage = new System.Windows.Forms.PictureBox();
+            this.ColumnsValue = new System.Windows.Forms.TextBox();
+            this.ColumnsLabel = new System.Windows.Forms.Label();
+            this.RowsLabel = new System.Windows.Forms.Label();
+            this.RowsValue = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.OriginalImage)).BeginInit();
             this.OriginalImageGroupBox.SuspendLayout();
             this.TestImageGroupBox.SuspendLayout();
@@ -44,8 +48,11 @@
             this.OriginalImage.Location = new System.Drawing.Point(3, 16);
             this.OriginalImage.Name = "OriginalImage";
             this.OriginalImage.Size = new System.Drawing.Size(394, 281);
+            this.OriginalImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.OriginalImage.TabIndex = 0;
             this.OriginalImage.TabStop = false;
+            this.OriginalImage.Paint += new System.Windows.Forms.PaintEventHandler(this.OriginalImage_Paint);
+            this.OriginalImage.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.OriginalImage_MouseDoubleClick);
             // 
             // OriginalImageGroupBox
             // 
@@ -76,11 +83,49 @@
             this.TestImage.TabIndex = 0;
             this.TestImage.TabStop = false;
             // 
+            // ColumnsValue
+            // 
+            this.ColumnsValue.Location = new System.Drawing.Point(480, 172);
+            this.ColumnsValue.Name = "ColumnsValue";
+            this.ColumnsValue.Size = new System.Drawing.Size(135, 20);
+            this.ColumnsValue.TabIndex = 3;
+            this.ColumnsValue.TextChanged += new System.EventHandler(this.ColumnsValue_TextChanged);
+            // 
+            // ColumnsLabel
+            // 
+            this.ColumnsLabel.AutoSize = true;
+            this.ColumnsLabel.Location = new System.Drawing.Point(427, 175);
+            this.ColumnsLabel.Name = "ColumnsLabel";
+            this.ColumnsLabel.Size = new System.Drawing.Size(47, 13);
+            this.ColumnsLabel.TabIndex = 4;
+            this.ColumnsLabel.Text = "Columns";
+            // 
+            // RowsLabel
+            // 
+            this.RowsLabel.AutoSize = true;
+            this.RowsLabel.Location = new System.Drawing.Point(440, 201);
+            this.RowsLabel.Name = "RowsLabel";
+            this.RowsLabel.Size = new System.Drawing.Size(34, 13);
+            this.RowsLabel.TabIndex = 5;
+            this.RowsLabel.Text = "Rows";
+            // 
+            // RowsValue
+            // 
+            this.RowsValue.Location = new System.Drawing.Point(480, 198);
+            this.RowsValue.Name = "RowsValue";
+            this.RowsValue.Size = new System.Drawing.Size(135, 20);
+            this.RowsValue.TabIndex = 6;
+            this.RowsValue.TextChanged += new System.EventHandler(this.RowsValue_TextChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(632, 325);
+            this.Controls.Add(this.RowsValue);
+            this.Controls.Add(this.RowsLabel);
+            this.Controls.Add(this.ColumnsLabel);
+            this.Controls.Add(this.ColumnsValue);
             this.Controls.Add(this.TestImageGroupBox);
             this.Controls.Add(this.OriginalImageGroupBox);
             this.MaximizeBox = false;
@@ -92,6 +137,7 @@
             this.TestImageGroupBox.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.TestImage)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -101,6 +147,10 @@
         private System.Windows.Forms.GroupBox OriginalImageGroupBox;
         private System.Windows.Forms.GroupBox TestImageGroupBox;
         private System.Windows.Forms.PictureBox TestImage;
+        private System.Windows.Forms.TextBox ColumnsValue;
+        private System.Windows.Forms.Label ColumnsLabel;
+        private System.Windows.Forms.Label RowsLabel;
+        private System.Windows.Forms.TextBox RowsValue;
     }
 }
 
