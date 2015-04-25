@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AForge.Imaging;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,6 +16,9 @@ namespace JigsawHelper
     {
         private Image originalImage, testImage;
         private int columns, rows;
+
+        // Variable to store matched regions
+        private TemplateMatch[] matchings;
 
         public MainForm()
         {
@@ -105,6 +109,8 @@ namespace JigsawHelper
                 float scaleFactor;
                 float xOffset = 0, yOffset = 0;
 
+                #region Draw grids
+
                 if(imageRatio >= containerRatio)
                 {
                     // Horizontal image
@@ -144,6 +150,29 @@ namespace JigsawHelper
                     graphics.DrawLine(pen, x*xCellSize + xOffset, yOffset, 
                                            x*xCellSize + xOffset, rows*xCellSize + yOffset);
                 }
+
+                #endregion
+
+                #region Plot matched result
+
+                /*
+                BitmapData data = sourceImage.LockBits(
+                    new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
+                    ImageLockMode.ReadWrite, sourceImage.PixelFormat);
+                */
+
+                // Set the pen to white for matched blocks
+                pen.Color = Color.White;
+                foreach(TemplateMatch matched in matchings)
+                {
+                    graphics.DrawRectangle(pen, matched.Rectangle);
+
+                    //Drawing.Rectangle(data, m.Rectangle, Color.White);
+                    // do something else with matching
+                }
+                //sourceImage.UnlockBits(data);
+
+                #endregion
             }
 
             // Redraw the image by calling the original painter
@@ -175,6 +204,36 @@ namespace JigsawHelper
                 TestImage.Image = (Image)testImage.Clone();
                 //TestImage.Refresh();
             }
+
+            FindSimilar();
+        }
+
+        private void FindSimilar()
+        {
+            float precision = 0.9;
+
+            // Create template matching algorithm's instance
+            ExhaustiveTemplateMatching template = new ExhaustiveTemplateMatching(precision);
+
+            // Find all matchings with specified above similarity
+            matchings = template.ProcessImage(originalImage, testImage);
+
+            /*
+            // Highlight found matchings
+            BitmapData data = sourceImage.LockBits(
+                new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
+                ImageLockMode.ReadWrite, sourceImage.PixelFormat);
+            foreach(TemplateMatch m in matchings)
+            {
+                Drawing.Rectangle(data, m.Rectangle, Color.White);
+                // do something else with matching
+            }
+            */
+
+            // Trigger repaint
+            OriginalImage.Refresh();
+
+            //sourceImage.UnlockBits(data);
         }
     }
 }
