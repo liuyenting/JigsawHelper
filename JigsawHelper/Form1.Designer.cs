@@ -80,8 +80,10 @@
             this.TestImage.Location = new System.Drawing.Point(3, 16);
             this.TestImage.Name = "TestImage";
             this.TestImage.Size = new System.Drawing.Size(194, 131);
+            this.TestImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.TestImage.TabIndex = 0;
             this.TestImage.TabStop = false;
+            this.TestImage.Click += new System.EventHandler(this.TestImage_Click);
             // 
             // ColumnsValue
             // 

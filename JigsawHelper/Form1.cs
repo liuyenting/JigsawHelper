@@ -13,7 +13,7 @@ namespace JigsawHelper
 {
     public partial class MainForm : Form
     {
-        private Image originalImage;
+        private Image originalImage, testImage;
         private int columns, rows;
 
         public MainForm()
@@ -135,14 +135,12 @@ namespace JigsawHelper
 
                 for(int y = 0; y < rows; ++y)
                 {
-                    //graphics.DrawLine(pen, 0, y*yCellSize, columns*yCellSize, y*yCellSize);
                     graphics.DrawLine(pen, xOffset, y*yCellSize + yOffset,
                                            columns*yCellSize + xOffset, y*yCellSize + yOffset);
                 }
 
                 for(int x = 0; x < columns; ++x)
                 {
-                    //graphics.DrawLine(pen, x*xCellSize, 0, x*xCellSize, rows*xCellSize);
                     graphics.DrawLine(pen, x*xCellSize + xOffset, yOffset, 
                                            x*xCellSize + xOffset, rows*xCellSize + yOffset);
                 }
@@ -150,6 +148,33 @@ namespace JigsawHelper
 
             // Redraw the image by calling the original painter
             base.OnPaint(e);
+        }
+
+        private void TestImage_Click(object sender, EventArgs e)
+        {
+            // TODO: Use WIA to monitor for new image
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            openFileDialog.InitialDirectory = "z:\\public\\";
+            openFileDialog.Filter = "Images (*.jpg, *.jpeg, *.png)|*.jpg; *.jpeg; *.png;|All files (*.*)|*.*";
+            openFileDialog.FilterIndex = 2;
+            openFileDialog.RestoreDirectory = true;
+
+            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    testImage = Image.FromFile(openFileDialog.FileName);
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                }
+
+                // Update the picture box
+                TestImage.Image = (Image)testImage.Clone();
+                //TestImage.Refresh();
+            }
         }
     }
 }
