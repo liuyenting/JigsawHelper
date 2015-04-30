@@ -83,7 +83,7 @@
             this.TestImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.TestImage.TabIndex = 0;
             this.TestImage.TabStop = false;
-            this.TestImage.Click += new System.EventHandler(this.TestImage_Click);
+            this.TestImage.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.TestImage_MouseDoubleClick);
             // 
             // ColumnsValue
             // 

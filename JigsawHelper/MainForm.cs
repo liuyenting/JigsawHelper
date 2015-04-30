@@ -1,24 +1,15 @@
-﻿using AForge.Imaging;
+﻿using Emgu.CV;
+using Emgu.CV.Structure;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Forms;
 
 namespace JigsawHelper
 {
     public partial class MainForm : Form
     {
-        private Image originalImage, testImage;
+        private Bitmap originalImage, testImage;
         private int columns, rows;
-
-        // Variable to store matched regions
-        private TemplateMatch[] matchings;
 
         public MainForm()
         {
@@ -34,28 +25,50 @@ namespace JigsawHelper
 
         private void OriginalImage_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            OpenFileDialog dialog = new OpenFileDialog();
 
-            openFileDialog.InitialDirectory = "z:\\public\\";
-            openFileDialog.Filter = "Images (*.jpg, *.jpeg, *.png)|*.jpg; *.jpeg; *.png;|All files (*.*)|*.*";
-            openFileDialog.FilterIndex = 2;
-            openFileDialog.RestoreDirectory = true;
+            dialog.InitialDirectory = "z:\\public\\";
+            dialog.Filter = "Images (*.jpg, *.jpeg, *.png)|*.jpg; *.jpeg; *.png;|All files (*.*)|*.*";
+            dialog.FilterIndex = 2;
+            dialog.RestoreDirectory = true;
 
-            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            if(dialog.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    originalImage = Image.FromFile(openFileDialog.FileName);
+                    LoadImage(OriginalImage, dialog.FileName, out originalImage);
+                    DrawGrids(OriginalImage, originalImage);
                 }
                 catch(Exception ex)
                 {
                     MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
                 }
-
-                // Update the picture box
-                OriginalImage.Image = (Image)originalImage.Clone();
-                OriginalImage.Refresh();
             }
+        }
+
+        private void TestImage_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+
+            dialog.InitialDirectory = "z:\\public\\";
+            dialog.Filter = "Images (*.jpg, *.jpeg, *.png)|*.jpg; *.jpeg; *.png;|All files (*.*)|*.*";
+            dialog.FilterIndex = 2;
+            dialog.RestoreDirectory = true;
+
+            if(dialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    LoadImage(TestImage, dialog.FileName, out testImage);
+                    DrawGrids(TestImage, testImage);
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                }
+            }
+
+            FindSimilar();
         }
 
         private string notAValidIntegerMessage = "Not a valid integer. Using previous value.";
@@ -89,151 +102,110 @@ namespace JigsawHelper
             }
         }
 
-        private void OriginalImage_Paint(object sender, PaintEventArgs e)
+        private void LoadImage(PictureBox target, string path, out Bitmap storage)
         {
-            Graphics graphics = e.Graphics;
-            Pen pen = new Pen(Color.Black);
+            Bitmap image = (Bitmap)Bitmap.FromFile(path);
+            target.Image = image;
+            target.ImageLocation = path;
 
-            if(originalImage != null)
-            {
-                int imageXSize = originalImage.Size.Width;
-                int imageYSize = originalImage.Size.Height;
-
-                int containerXSize = OriginalImage.Size.Width;
-                int containerYSize = OriginalImage.Size.Height;
-
-                float imageRatio = imageXSize / (float)imageYSize; // image W:H ratio
-                float containerRatio = containerXSize / (float)containerYSize; // container W:H ratio
-
-                // Scale factor and filler size
-                float scaleFactor;
-                float xOffset = 0, yOffset = 0;
-
-                #region Draw grids
-
-                if(imageRatio >= containerRatio)
-                {
-                    // Horizontal image
-                    scaleFactor = containerXSize / (float)imageXSize;
-                    float scaledHeight = imageYSize * scaleFactor;
-
-                    // Calculate filler size
-                    yOffset = Math.Abs(containerYSize - scaledHeight) / 2;
-                    /*
-                    unscaled_p.X = (int)(p.X / scaleFactor);
-                    unscaled_p.Y = (int)((p.Y - filler) / scaleFactor);
-                    */
-                }
-                else
-                {
-                    // Vertical image
-                    scaleFactor = containerYSize / (float)imageYSize;
-                    float scaledWidth = imageYSize * scaleFactor;
-                    xOffset = Math.Abs(containerXSize - scaledWidth) / 2;
-                    /*
-                    unscaled_p.X = (int)((p.X - filler) / scaleFactor);
-                    unscaled_p.Y = (int)(p.Y / scaleFactor);
-                    */
-                }
-
-                int xCellSize = (int)(imageXSize / columns * scaleFactor);
-                int yCellSize = (int)(imageYSize / rows * scaleFactor);
-
-                for(int y = 0; y < rows; ++y)
-                {
-                    graphics.DrawLine(pen, xOffset, y*yCellSize + yOffset,
-                                           columns*yCellSize + xOffset, y*yCellSize + yOffset);
-                }
-
-                for(int x = 0; x < columns; ++x)
-                {
-                    graphics.DrawLine(pen, x*xCellSize + xOffset, yOffset, 
-                                           x*xCellSize + xOffset, rows*xCellSize + yOffset);
-                }
-
-                #endregion
-
-                #region Plot matched result
-
-                /*
-                BitmapData data = sourceImage.LockBits(
-                    new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
-                    ImageLockMode.ReadWrite, sourceImage.PixelFormat);
-                */
-
-                // Set the pen to white for matched blocks
-                pen.Color = Color.White;
-                foreach(TemplateMatch matched in matchings)
-                {
-                    graphics.DrawRectangle(pen, matched.Rectangle);
-
-                    //Drawing.Rectangle(data, m.Rectangle, Color.White);
-                    // do something else with matching
-                }
-                //sourceImage.UnlockBits(data);
-
-                #endregion
-            }
-
-            // Redraw the image by calling the original painter
-            base.OnPaint(e);
+            storage = image;
         }
 
-        private void TestImage_Click(object sender, EventArgs e)
+
+        private void OriginalImage_Paint(object sender, PaintEventArgs e)
         {
-            // TODO: Use WIA to monitor for new image
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            base.OnPaint(e);
 
-            openFileDialog.InitialDirectory = "z:\\public\\";
-            openFileDialog.Filter = "Images (*.jpg, *.jpeg, *.png)|*.jpg; *.jpeg; *.png;|All files (*.*)|*.*";
-            openFileDialog.FilterIndex = 2;
-            openFileDialog.RestoreDirectory = true;
+            if((sender as PictureBox).Image != null)
+                DrawGrids(sender as PictureBox, originalImage);
+        }
 
-            if(openFileDialog.ShowDialog() == DialogResult.OK)
+        private void DrawGrids(PictureBox target, Bitmap image)
+        {
+            int imageXSize = image.Size.Width;
+            int imageYSize = image.Size.Height;
+
+            int containerXSize = OriginalImage.Size.Width;
+            int containerYSize = OriginalImage.Size.Height;
+
+            float imageRatio = imageXSize / (float)imageYSize; // image W:H ratio
+            float containerRatio = containerXSize / (float)containerYSize; // container W:H ratio
+
+            // Scale factor and filler size
+            float scaleFactor;
+            float xOffset = 0, yOffset = 0;
+
+            if(imageRatio >= containerRatio)
             {
-                try
-                {
-                    testImage = Image.FromFile(openFileDialog.FileName);
-                }
-                catch(Exception ex)
-                {
-                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-                }
+                // Horizontal image
+                scaleFactor = containerXSize / (float)imageXSize;
+                float scaledHeight = imageYSize * scaleFactor;
 
-                // Update the picture box
-                TestImage.Image = (Image)testImage.Clone();
-                //TestImage.Refresh();
+                // Calculate filler size
+                yOffset = Math.Abs(containerYSize - scaledHeight) / 2;
+                /*
+                unscaled_p.X = (int)(p.X / scaleFactor);
+                unscaled_p.Y = (int)((p.Y - filler) / scaleFactor);
+                */
+            }
+            else
+            {
+                // Vertical image
+                scaleFactor = containerYSize / (float)imageYSize;
+                float scaledWidth = imageYSize * scaleFactor;
+                xOffset = Math.Abs(containerXSize - scaledWidth) / 2;
+                /*
+                unscaled_p.X = (int)((p.X - filler) / scaleFactor);
+                unscaled_p.Y = (int)(p.Y / scaleFactor);
+                */
             }
 
-            FindSimilar();
+            int xCellSize = (int)(imageXSize / columns * scaleFactor);
+            int yCellSize = (int)(imageYSize / rows * scaleFactor);
+
+            Graphics graphics = Graphics.FromImage(image);
+            Pen pen = new Pen(Color.White);
+            for(int y = 0; y < rows; ++y)
+            {
+                graphics.DrawLine(pen, xOffset, y*yCellSize + yOffset,
+                                       columns*yCellSize + xOffset, y*yCellSize + yOffset);
+            }
+
+            for(int x = 0; x < columns; ++x)
+            {
+                graphics.DrawLine(pen, x*xCellSize + xOffset, yOffset,
+                                       x*xCellSize + xOffset, rows*xCellSize + yOffset);
+            }
+            graphics.Dispose();
+
+            target.Image = image;
         }
 
         private void FindSimilar()
         {
-            float precision = 0.9;
+            Image<Bgr, byte> source = new Image<Bgr, byte>("z:\\public\\test.jpeg");
+            Image<Bgr, byte> template = new Image<Bgr, byte>(testImage);
+            Image<Bgr, byte> imageToShow = source.Copy();
 
-            // Create template matching algorithm's instance
-            ExhaustiveTemplateMatching template = new ExhaustiveTemplateMatching(precision);
-
-            // Find all matchings with specified above similarity
-            matchings = template.ProcessImage(originalImage, testImage);
-
-            /*
-            // Highlight found matchings
-            BitmapData data = sourceImage.LockBits(
-                new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
-                ImageLockMode.ReadWrite, sourceImage.PixelFormat);
-            foreach(TemplateMatch m in matchings)
+            using(Image<Gray, float> result = source.MatchTemplate(template, Emgu.CV.CvEnum.TM_TYPE.CV_TM_CCOEFF_NORMED))
             {
-                Drawing.Rectangle(data, m.Rectangle, Color.White);
-                // do something else with matching
+                double[] minValues, maxValues;
+                Point[] minLocations, maxLocations;
+                result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
+
+                // You can try different values of the threshold. I guess somewhere between 0.75 and 0.95 would be good.
+                if(maxValues[0] > 0.9)
+                {
+                    // This is a match. Do something with it, for example draw a rectangle around it.
+                    Rectangle match = new Rectangle(maxLocations[0], template.Size);
+                    imageToShow.Draw(match, new Bgr(Color.Red), 3);
+                }
             }
-            */
 
-            // Trigger repaint
-            OriginalImage.Refresh();
-
-            //sourceImage.UnlockBits(data);
+            // Show imageToShow in an ImageBox (here assumed to be called imageBox1)
+            OriginalImage.Image = imageToShow.ToBitmap();
         }
+
+        
     }
 }
